@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id        String   @id @default(cuid())
+  name      String
+  baseUrl   String
+  apiKey    String?  // Encrypted server-side
+  modelName String
+  isDefault Boolean  @default(false)
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  topic       String
+  providerId  String?
+  documents   Document[]
+  outputs     StructuredOutput[]
+}
+
+model Document {
+  id          String    @id @default(cuid())
+  url         String
+  title       String
+  content     String
+  source      String    // nvidia | techcrunch | yahoo
+  publishedAt DateTime?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model StructuredOutput {
+  id          String   @id @default(cuid())
+  workspaceId String
+  jsonData    String   // Validated JSON
+  summary     String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  name      String
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+    id        String   @id @default(cuid())
+    sessionId String
+    role      String
+    content   String
+    session   ChatSession @relation(fields: [sessionId], references: [id])
+}
