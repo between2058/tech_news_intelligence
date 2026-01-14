@@ -10,57 +10,89 @@ export class NvidiaCrawler implements Crawler {
         try {
             const page = await browser.newPage();
 
-            // 1. Navigate to In the News
-            await page.goto('https://nvidianews.nvidia.com/in-the-news?year=2026', { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-            // 2. Extract article links
-            // NVIDIA newsroom structure: usually a list of articles in a grid or list
-            // Selector: looking for links within the news list container.
-            // We'll grab all links that look like news articles or external links
-            // NVIDIA "In the news" links to external sites usually.
-
-            // Wait for list to load
-            await page.waitForSelector('main', { timeout: 10000 }).catch(() => { });
-
-            const articles = await page.evaluate(() => {
-                // This is heuristic: find links that seem to be news items. 
-                // Often inside a specific container class.
-                // For MVP, we'll try to find all 'a' tags that are inside typical list elements
-                const links = Array.from(document.querySelectorAll('main a'));
-                return links
-                    .map(a => {
-                        const anchor = a as HTMLAnchorElement;
-                        return {
-                            url: anchor.href,
-                            title: (anchor.textContent || '').trim()
-                        };
-                    })
-                    .filter(a => a.url && a.title.length > 10)
-                    .slice(0, 5);
+            // 1. Navigate to In the News (current year)
+            console.log('NVIDIA: Navigating to newsroom...');
+            await page.goto('https://nvidianews.nvidia.com/in-the-news', {
+                waitUntil: 'networkidle',
+                timeout: 30000
             });
 
-            // 3. Visit each article (filtered)
+            // Wait for content to load
+            await page.waitForTimeout(3000);
+
+            // 2. Extract article links using the correct selectors
+            // Structure: article.index-item > ... > h3.index-item-text-title > a
+            const articles = await page.evaluate(() => {
+                const results: { url: string; title: string }[] = [];
+
+                // Primary selector: article title links
+                const titleLinks = document.querySelectorAll('article.index-item h3.index-item-text-title a');
+
+                titleLinks.forEach(link => {
+                    const anchor = link as HTMLAnchorElement;
+                    const title = anchor.textContent?.trim() || '';
+                    const url = anchor.href;
+
+                    if (url && title.length > 10) {
+                        results.push({ url, title });
+                    }
+                });
+
+                // Fallback: if above didn't work, try broader selector
+                if (results.length === 0) {
+                    const allLinks = document.querySelectorAll('main a[target="_blank"]');
+                    allLinks.forEach(link => {
+                        const anchor = link as HTMLAnchorElement;
+                        const title = anchor.textContent?.trim() || '';
+                        const url = anchor.href;
+
+                        if (url &&
+                            title.length > 15 &&
+                            !title.toLowerCase().includes('read more') &&
+                            !url.includes('nvidianews.nvidia.com')) {
+                            results.push({ url, title });
+                        }
+                    });
+                }
+
+                return results.slice(0, 5);
+            });
+
+            console.log(`NVIDIA: Found ${articles.length} articles:`, articles.map(a => a.title));
+
+            // 3. Visit each article
             for (const article of articles) {
                 try {
+                    console.log(`NVIDIA: Crawling "${article.title.substring(0, 50)}..."`);
                     const articlePage = await browser.newPage();
-                    await articlePage.goto(article.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+
+                    await articlePage.goto(article.url, {
+                        waitUntil: 'domcontentloaded',
+                        timeout: 20000
+                    });
 
                     const content = await articlePage.evaluate(() => {
-                        return document.body.innerText;
+                        // Try to get article content, fall back to body text
+                        const article = document.querySelector('article');
+                        const main = document.querySelector('main');
+                        const body = document.body;
+                        return (article?.innerText || main?.innerText || body.innerText).substring(0, 5000);
                     });
 
                     const normalized = normalizeDocument(
                         article.title,
                         article.url,
-                        content.substring(0, 5000),
+                        content,
                         'nvidia',
-                        new Date() // Timestamp might need extraction from page if possible
+                        new Date()
                     );
 
                     results.push(normalized);
                     await articlePage.close();
+
+                    console.log(`NVIDIA: Successfully crawled "${article.title.substring(0, 40)}..."`);
                 } catch (e) {
-                    console.error(`Failed to crawl NVIDIA article ${article.url}`, e);
+                    console.error(`NVIDIA: Failed to crawl article ${article.url}`, e);
                 }
             }
 
@@ -70,6 +102,7 @@ export class NvidiaCrawler implements Crawler {
             await browser.close();
         }
 
+        console.log(`NVIDIA: Returning ${results.length} total results`);
         return results;
     }
 }
