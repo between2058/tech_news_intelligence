@@ -57,12 +57,15 @@ OPENAI_API_KEY="sk-your-openai-key-here"
 
 ### 4. Setup the Database
 
-Initialize the SQLite database using Prisma.
+Initialize the SQLite database and seed it with default configuration.
 
 ```bash
 npx prisma generate
 npx prisma db push
+npx prisma db seed
 ```
+
+> **Note**: `db seed` will automatically create a default LLM provider using your `OPENAI_API_KEY` from `.env`.
 
 ### 5. Run the Development Server
 
@@ -73,6 +76,19 @@ npm run dev
 ```
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
+
+## 🔧 Troubleshooting
+
+### "No LLM configured" Error
+If you see "No LLM configured" when using the app, it means the database is missing provider configuration. This often happens on new deployments.
+
+**Fix:**
+Run the seed command to automatically configure the default provider:
+```bash
+npx prisma db seed
+```
+*Ensure your `.env` file contains a valid `OPENAI_API_KEY` before running this.*
+
 
 ## 🏗️ Project Structure
 
