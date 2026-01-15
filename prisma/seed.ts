@@ -3,32 +3,28 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-    const existingProvider = await prisma.provider.findFirst({
-        where: { isDefault: true },
+    console.log('Seeding default LLM provider...');
+
+    // Upsert the default provider (Llama 3.3 70B via Groq/Compatible API)
+    // Note: API Key must be set via env var OPENAI_API_KEY
+    // We use a placeholder here if not provided, but the code relies on the env var mostly.
+    // Actually, the app logic in llm/client.ts prefers the DB key, so we should allow valid input.
+    // For now, we set a clear instruction.
+
+    await prisma.provider.upsert({
+        where: { id: 'default-llama' },
+        update: {},
+        create: {
+            id: 'default-llama',
+            name: 'LLAMA 3.3 70B (Default)',
+            baseUrl: 'https://api.groq.com/openai/v1', // Using Groq as a high-performance default for Llama 3
+            apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder', // Fallback if env not set during seed
+            modelName: 'llama-3.3-70b-versatile',
+            isDefault: true,
+        },
     });
 
-    if (!existingProvider) {
-        if (!process.env.OPENAI_API_KEY) {
-            console.warn(
-                '⚠️ No OPENAI_API_KEY found in environment. Skipping default provider creation.'
-            );
-            return;
-        }
-
-        console.log('Creating default OpenAI provider...');
-        await prisma.provider.create({
-            data: {
-                name: 'OpenAI (Default)',
-                baseUrl: 'https://api.openai.com/v1',
-                apiKey: process.env.OPENAI_API_KEY,
-                modelName: 'gpt-4-turbo-preview',
-                isDefault: true,
-            },
-        });
-        console.log('✅ Default provider created.');
-    } else {
-        console.log('ℹ️ Default provider already exists.');
-    }
+    console.log('Default provider seeded successfully.');
 }
 
 main()

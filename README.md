@@ -57,15 +57,12 @@ OPENAI_API_KEY="sk-your-openai-key-here"
 
 ### 4. Setup the Database
 
-Initialize the SQLite database and seed it with default configuration.
+Initialize the SQLite database using Prisma.
 
 ```bash
 npx prisma generate
 npx prisma db push
-npx prisma db seed
 ```
-
-> **Note**: `db seed` will automatically create a default LLM provider using your `OPENAI_API_KEY` from `.env`.
 
 ### 5. Run the Development Server
 
@@ -77,18 +74,23 @@ npm run dev
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
 
-## 🔧 Troubleshooting
+### 6. Deployment on JupyterLab / Containers
 
-### "No LLM configured" Error
-If you see "No LLM configured" when using the app, it means the database is missing provider configuration. This often happens on new deployments.
+When deploying on a different machine (e.g., JupyterLab container), follow these additional steps:
 
-**Fix:**
-Run the seed command to automatically configure the default provider:
+**1. Database Seeding (Fix for "No LLM Configured")**
+After setting up the database, run the seed script to configure the default "LLAMA 3.3 70B" provider.
+
 ```bash
 npx prisma db seed
 ```
-*Ensure your `.env` file contains a valid `OPENAI_API_KEY` before running this.*
 
+**2. Network Access**
+If running inside a container, bind to `0.0.0.0` to access the app from outside.
+
+```bash
+npm run dev -- --hostname 0.0.0.0 --port 3002
+```
 
 ## 🏗️ Project Structure
 
