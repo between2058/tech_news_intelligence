@@ -1,156 +1,113 @@
-# Tech News Intelligence Assistant
+# Multi-Workspace Tech News Intelligence Assistant
 
-A multi-workspace research platform for collecting, structuring, and analyzing technology news from NVIDIA Newsroom, TechCrunch, and Yahoo Finance. Features AI-powered analysis with cross-workspace reasoning capabilities.
+A powerful, AI-driven news intelligence platform designed to track, analyze, and synthesize tech news across multiple workspaces. This MVP features a premium "Glass" UI, structured data extraction, and a global AI assistant.
 
-## Features
+## 🚀 Features
 
-- **Multi-Workspace Management** - Create separate research environments for different topics (e.g., "NVIDIA Blackwell", "GPT-5")
-- **Intelligent Crawling** - Automated news collection from TechCrunch (HTTP), NVIDIA Newsroom and Yahoo Finance (Playwright)
-- **LLM-Powered Analysis** - Structured insights extraction including key findings, entities, sentiment, and timeline
-- **Global Assistant** - Cross-workspace chat with markdown rendering for comparing research across topics
-- **Bring Your Own Model** - Configure any OpenAI-compatible LLM provider (Ollama, OpenAI, vLLM, etc.)
+- **Multi-Workspace Architecture**: Organize research by topics (e.g., "AI & ML", "Semiconductors").
+- **Structured Intelligence**: Automatically extracts entities, sentiment, and summaries from news articles.
+- **Global AI Assistant**: Cross-workspace chat interface to compare trends and ask complex questions.
+- **Premium UI**: Modern, dark-mode design system with glassmorphism and smooth animations.
 
-## Tech Stack
+## 🛠️ Prerequisites
 
-- **Frontend**: Next.js 16, React 19, Tailwind CSS 4
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: SQLite
-- **Crawling**: Playwright (headless browser)
-- **LLM**: OpenAI-compatible API
+Before you begin, ensure you have the following installed on your machine:
 
-## Prerequisites
+- **Node.js** (v18 or higher)
+- **npm** (v9 or higher)
+- **git**
 
-- Node.js 18+ 
-- npm or yarn
-- An OpenAI-compatible LLM endpoint (e.g., local Ollama, OpenAI API, or vLLM)
+## 🏁 Getting Started
 
-## Environment Setup
+Follow these steps to set up the project on a new machine.
 
-### 1. Clone and Install Dependencies
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd News_assistant
+```
+
+### 2. Install Dependencies
+
+Install the Node.js dependencies and Playwright browsers (required for web crawling).
+
+```bash
 npm install
+npx playwright install
 ```
 
-### 2. Install Playwright Browser
+### 3. Configure Environment Variables
+
+Create a `.env` file from the example template.
 
 ```bash
-npx playwright install chromium
+cp .env.example .env
 ```
 
-### 3. Setup Database
+Open `.env` and add your API keys:
 
-```bash
-# Generate Prisma client
-npx prisma generate
-
-# Run migrations to create database
-npx prisma migrate dev
-```
-
-### 4. Configure Environment
-
-The `.env` file is auto-generated with SQLite database path:
-```
+```env
+# .env
 DATABASE_URL="file:./dev.db"
+OPENAI_API_KEY="sk-your-openai-key-here"
 ```
 
-### 5. Start Development Server
+> **Note**: An OpenAI API key is required for the AI features to work.
+
+### 4. Setup the Database
+
+Initialize the SQLite database using Prisma.
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 5. Run the Development Server
+
+Start the application locally.
 
 ```bash
 npm run dev
-# or specify a port
-npm run dev -- --port 3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (or your specified port).
+The app will be available at [http://localhost:3000](http://localhost:3000).
 
-### 6. Configure LLM Provider
+## 🏗️ Project Structure
 
-1. Click **Settings** in the top right
-2. Add your LLM provider:
-   - **Name**: e.g., "Local Ollama" or "OpenAI"
-   - **Base URL**: e.g., `http://localhost:11434/v1` for Ollama
-   - **API Key**: Leave empty for local providers, or enter your API key
-   - **Model Name**: e.g., `llama3`, `gpt-4`, etc.
-3. Click **Add Provider**
+- **`src/app`**: Next.js App Router pages and API endpoints.
+- **`src/components`**: React components (UI elements).
+- **`src/lib`**: Utility functions, crawlers, and LLM clients.
+- **`src/lib/crawlers`**: Logic for fetching data from TechCrunch, NVIDIA, etc.
+- **`prisma/schema.prisma`**: Database schema definition.
 
-## Development & Testing
+## 🧪 Running Tests
 
-### Run Tests
+To verify everything is working correctly:
 
 ```bash
-# Run all tests
+# Run unit tests
 npm test
 
-# Run specific test file
-npm test normalization
-npm test techcrunch
-
-# Run tests in watch mode
-npm test -- --watch
-```
-
-### Test Coverage
-
-The project includes tests for:
-- Document normalization (`src/__tests__/lib/normalization.test.ts`)
-- TechCrunch crawler (`src/__tests__/lib/crawlers/techcrunch.test.ts`)
-
-### Linting
-
-```bash
+# Run linting
 npm run lint
 ```
 
-### Build for Production
+## 📦 Deployment
 
+This application is built with Next.js and can be easily deployed to Vercel or any Node.js hosting.
+
+**Build for output:**
 ```bash
 npm run build
 npm start
 ```
 
-## Project Structure
+## 🤝 Contributing
 
-```
-src/
-├── app/
-│   ├── api/                    # API routes
-│   │   ├── chat/               # Global assistant endpoint
-│   │   ├── providers/          # LLM provider CRUD
-│   │   └── workspaces/         # Workspace CRUD & crawl
-│   ├── globals.css             # Tailwind imports
-│   ├── layout.tsx              # Root layout
-│   └── page.tsx                # Home page
-├── components/
-│   ├── Dashboard.tsx           # Main dashboard layout
-│   ├── GlobalAssistant.tsx     # Chat interface
-│   ├── ProviderConfig.tsx      # LLM configuration UI
-│   ├── WorkspaceTabs.tsx       # Workspace navigation
-│   └── WorkspaceView.tsx       # Research results display
-├── lib/
-│   ├── crawlers/               # News crawlers
-│   │   ├── base.ts             # Crawler interface
-│   │   ├── nvidia.ts           # NVIDIA Newsroom (Playwright)
-│   │   ├── techcrunch.ts       # TechCrunch (HTTP)
-│   │   └── yahoo.ts            # Yahoo Finance (Playwright)
-│   ├── llm/
-│   │   ├── client.ts           # OpenAI-compatible client
-│   │   └── schemas.ts          # JSON output schemas
-│   ├── normalization.ts        # Document cleaning
-│   └── prisma.ts               # Database client
-└── __tests__/                  # Test files
-```
-
-## Usage
-
-1. **Create a Workspace**: Click "+ New Workspace", enter a name and research topic
-2. **Crawl Sources**: Click "Crawl Sources" to fetch and analyze news
-3. **View Results**: See key findings, entities, sentiment, and source documents
-4. **Ask Questions**: Use the Chat Assistant to query across all workspaces
-
-## License
-
-MIT
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
